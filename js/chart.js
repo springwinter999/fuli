@@ -559,6 +559,14 @@ class InvestmentChart {
 
 // 导出图表实例
 const investmentChart = new InvestmentChart();
+
+// 在Node.js环境中使用模块导出
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     module.exports = { investmentChart };
+}
+
+// 在浏览器环境中将实例添加到window对象
+if (typeof window !== 'undefined') {
+    window.investmentChart = investmentChart;
+    console.log('图表实例已添加到window对象');
 }

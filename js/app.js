@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // 初始化UI增强
         initUIEnhancements();
         
+        // 初始化图表
+        initCharts();
+        
     } catch (error) {
         console.error('初始化错误:', error);
     }
@@ -332,6 +335,9 @@ function updateLumpSumResult(result) {
             }
         });
         
+        // 生成年度数据并更新图表
+        updateLumpSumChart(result);
+        
         console.log('一次性投资计算完成:', result);
     } catch (error) {
         console.error('更新一次性投资结果错误:', error);
@@ -423,6 +429,9 @@ function updateRegularInvestmentResult(result) {
             }
         });
         
+        // 生成年度数据并更新图表
+        updateRegularInvestmentChart(result);
+        
         console.log('定期定额投资计算完成:', result);
     } catch (error) {
         console.error('更新定期定额投资结果错误:', error);
@@ -439,6 +448,259 @@ function formatCurrency(value) {
 /**
  * 初始化UI增强功能
  */
+/**
+ * 初始化图表
+ */
+function initCharts() {
+    try {
+        console.log('开始初始化图表...');
+        console.log('window.investmentChart是否存在:', window.investmentChart !== undefined);
+        console.log('window.investmentChart类型:', typeof window.investmentChart);
+        
+        if (window.investmentChart) {
+            console.log('图表对象方法列表:', Object.keys(window.investmentChart));
+            
+            // 初始化一次性投资图表
+            const lumpSumChartEl = document.getElementById('lump-sum-chart');
+            console.log('一次性投资图表元素:', lumpSumChartEl);
+            
+            if (lumpSumChartEl) {
+                console.log('准备初始化一次性投资图表...');
+                window.investmentChart.initLumpSumChart('lump-sum-chart');
+                console.log('一次性投资图表初始化完成');
+                
+                // 初始化默认数据
+                console.log('初始化一次性投资默认数据...');
+                const defaultLumpSumData = {
+                    principal: 100000,
+                    finalAmount: 215892.5,
+                    interest: 115892.5,
+                    returnRate: 115.89
+                };
+                updateLumpSumChart(defaultLumpSumData);
+            }
+            
+            // 初始化定期投资图表
+            const regularChartEl = document.getElementById('regular-investment-chart');
+            console.log('定期投资图表元素:', regularChartEl);
+            
+            if (regularChartEl) {
+                console.log('准备初始化定期投资图表...');
+                window.investmentChart.initRegularInvestmentChart('regular-investment-chart');
+                console.log('定期定额投资图表初始化完成');
+                
+                // 初始化默认数据
+                console.log('初始化定期投资默认数据...');
+                const defaultRegularData = {
+                    totalPrincipal: 1200000,
+                    finalAmount: 1897332.36,
+                    totalInterest: 697332.36,
+                    returnRate: 58.11
+                };
+                updateRegularInvestmentChart(defaultRegularData);
+            }
+            
+            // 添加图表动画效果
+            if (typeof window.investmentChart.addChartAnimation === 'function') {
+                window.investmentChart.addChartAnimation();
+                console.log('图表动画效果添加完成');
+            } else {
+                console.warn('addChartAnimation方法不存在');
+            }
+        } else {
+            console.warn('图表模块未加载，window.investmentChart为undefined');
+            console.log('检查chart.js是否正确引入和执行');
+        }
+    } catch (error) {
+        console.error('初始化图表错误:', error);
+        console.error('错误堆栈:', error.stack);
+    }
+}
+
+/**
+ * 更新一次性投资图表
+ */
+function updateLumpSumChart(result) {
+    try {
+        console.log('开始更新一次性投资图表...');
+        console.log('检查必要条件:', { investmentChart: !!window.investmentChart, result: !!result, hasPrincipal: result?.principal !== undefined });
+        
+        if (!window.investmentChart) {
+            console.warn('跳过图表更新，图表对象不存在');
+            return;
+        }
+        
+        // 获取计算参数
+        let principal = 100000;
+        let rate = 8;
+        let years = 10;
+        let compoundMethod = 12;
+        
+        // 尝试从表单获取参数
+        try {
+            const principalInput = document.getElementById('lump-sum-principal') || 
+                                  document.getElementById('initial-investment') || 
+                                  document.getElementById('principal') ||
+                                  document.getElementById('initial-amount');
+            
+            const rateInput = document.getElementById('lump-sum-rate') || 
+                             document.getElementById('annual-rate') || 
+                             document.getElementById('rate');
+            
+            const yearsInput = document.getElementById('lump-sum-years') || 
+                              document.getElementById('investment-years') || 
+                              document.getElementById('years');
+            
+            const compoundFrequencySelect = document.getElementById('compound-frequency-lump') || 
+                                           document.getElementById('compound-frequency');
+            
+            // 使用表单值或保持默认值
+            if (principalInput) principal = parseFloat(principalInput.value) || principal;
+            if (rateInput) rate = parseFloat(rateInput.value) || rate;
+            if (yearsInput) years = parseInt(yearsInput.value, 10) || years;
+            if (compoundFrequencySelect) compoundMethod = parseInt(compoundFrequencySelect.value, 10) || compoundMethod;
+        } catch (e) {
+            console.warn('获取表单参数时出错，使用默认值:', e);
+        }
+        
+        console.log('计算参数:', { principal, rate, years, compoundMethod });
+        
+        // 生成年度数据
+        const annualData = [];
+        const rateDecimal = rate / 100;
+        
+        console.log('开始生成年度数据，rateDecimal:', rateDecimal);
+        
+        for (let year = 0; year <= years; year++) {
+            // 计算每年的价值
+            const periods = year * compoundMethod;
+            const compoundRate = rateDecimal / compoundMethod;
+            const value = principal * Math.pow(1 + compoundRate, periods);
+            
+            const yearData = {
+                year: year,
+                principal: principal,
+                value: value,
+                interest: value - principal
+            };
+            
+            console.log(`年度数据 ${year}:`, yearData);
+            annualData.push(yearData);
+        }
+        
+        console.log('生成的完整年度数据:', annualData);
+        
+        // 更新图表
+        if (typeof window.investmentChart.updateLumpSumChart === 'function') {
+            console.log('调用图表更新方法...');
+            window.investmentChart.updateLumpSumChart(annualData);
+            console.log('一次性投资图表更新完成');
+        } else {
+            console.error('updateLumpSumChart方法不存在');
+        }
+    } catch (error) {
+        console.error('更新一次性投资图表错误:', error);
+        console.error('错误堆栈:', error.stack);
+    }
+}
+
+/**
+ * 更新定期投资图表
+ */
+function updateRegularInvestmentChart(result) {
+    try {
+        console.log('开始更新定期投资图表...');
+        console.log('检查必要条件:', { investmentChart: !!window.investmentChart, result: !!result, hasTotalPrincipal: result?.totalPrincipal !== undefined });
+        
+        if (!window.investmentChart) {
+            console.warn('跳过图表更新，图表对象不存在');
+            return;
+        }
+        
+        // 获取计算参数
+        let monthlyPayment = 10000;
+        let rate = 8;
+        let years = 10;
+        let compoundMethod = 12;
+        
+        // 尝试从表单获取参数
+        try {
+            const monthlyInput = document.getElementById('regular-monthly') || 
+                                 document.getElementById('monthly-investment') || 
+                                 document.getElementById('monthly');
+            
+            const rateInput = document.getElementById('regular-rate') || 
+                              document.getElementById('annual-rate-regular') || 
+                              document.getElementById('rate-regular');
+            
+            const yearsInput = document.getElementById('regular-years') || 
+                              document.getElementById('investment-years-regular') || 
+                              document.getElementById('years-regular');
+            
+            const compoundFrequencySelect = document.getElementById('compound-frequency-regular') || 
+                                           document.getElementById('compound-frequency');
+            
+            // 使用表单值或保持默认值
+            if (monthlyInput) monthlyPayment = parseFloat(monthlyInput.value) || monthlyPayment;
+            if (rateInput) rate = parseFloat(rateInput.value) || rate;
+            if (yearsInput) years = parseInt(yearsInput.value, 10) || years;
+            if (compoundFrequencySelect) compoundMethod = parseInt(compoundFrequencySelect.value, 10) || compoundMethod;
+        } catch (e) {
+            console.warn('获取表单参数时出错，使用默认值:', e);
+        }
+        
+        console.log('计算参数:', { monthlyPayment, rate, years, compoundMethod });
+        
+        // 生成年度数据
+        const annualData = [];
+        const rateDecimal = rate / 100;
+        const compoundRate = rateDecimal / compoundMethod;
+        
+        console.log('开始生成年度数据，rateDecimal:', rateDecimal, 'compoundRate:', compoundRate);
+        
+        for (let year = 0; year <= years; year++) {
+            const totalPeriods = year * compoundMethod;
+            const paymentPerPeriod = monthlyPayment * (12 / compoundMethod);
+            
+            let yearEndValue = 0;
+            let yearPrincipal = 0;
+            
+            if (totalPeriods > 0) {
+                // 计算年末总价值
+                yearEndValue = paymentPerPeriod * ((Math.pow(1 + compoundRate, totalPeriods) - 1) / compoundRate);
+                // 计算累计本金
+                yearPrincipal = monthlyPayment * year * 12;
+            }
+            
+            const yearInterest = yearEndValue - yearPrincipal;
+            
+            const yearData = {
+                year: year,
+                principal: yearPrincipal,
+                interest: yearInterest,
+                value: yearEndValue
+            };
+            
+            console.log(`年度数据 ${year}:`, yearData);
+            annualData.push(yearData);
+        }
+        
+        console.log('生成的完整年度数据:', annualData);
+        
+        // 更新图表
+        if (typeof window.investmentChart.updateRegularInvestmentChart === 'function') {
+            console.log('调用图表更新方法...');
+            window.investmentChart.updateRegularInvestmentChart(annualData);
+            console.log('定期定额投资图表更新完成');
+        } else {
+            console.error('updateRegularInvestmentChart方法不存在');
+        }
+    } catch (error) {
+        console.error('更新定期定额投资图表错误:', error);
+        console.error('错误堆栈:', error.stack);
+    }
+}
+
 function initUIEnhancements() {
     try {
         // 添加输入框焦点效果
