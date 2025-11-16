@@ -116,7 +116,8 @@ function calculateLumpSum() {
         const principalInput = 
             document.getElementById('lump-sum-principal') || 
             document.getElementById('initial-investment') || 
-            document.getElementById('principal');
+            document.getElementById('principal') ||
+            document.getElementById('initial-amount');
         
         const rateInput = 
             document.getElementById('lump-sum-rate') || 
@@ -128,28 +129,45 @@ function calculateLumpSum() {
             document.getElementById('investment-years') || 
             document.getElementById('years');
             
+        const compoundFrequencySelect = 
+            document.getElementById('compound-frequency-lump') || 
+            document.getElementById('compound-frequency');
+            
         console.log('找到的输入元素:', {
             principalInput: !!principalInput,
             rateInput: !!rateInput,
-            yearsInput: !!yearsInput
+            yearsInput: !!yearsInput,
+            compoundFrequencySelect: !!compoundFrequencySelect
         });
+        
+        // 验证输入并确保正确转换为数字
+        const principal = parseFloat(principalInput?.value) || 100000;
+        const rate = parseFloat(rateInput?.value) || 8;
+        const years = parseInt(yearsInput?.value, 10) || 10;
+        const compoundMethod = parseInt(compoundFrequencySelect?.value || 12, 10);
+        
+        console.log('计算一次性投资:', { principal, rate, years, compoundMethod });
+        
+        // 输入验证
+        if (principal <= 0 || rate <= 0 || years <= 0) {
+            console.error('无效的投资参数');
+            return;
+        }
+        
+        // 将百分比转换为小数
+        const rateDecimal = rate / 100;
         
         // 使用外部计算器实例（如果可用）
         let result;
         if (window.calculator && typeof window.calculator.calculateLumpSum === 'function') {
-            // 使用外部计算器
-            const principal = parseFloat(principalInput?.value) || 100000;
-            const rate = parseFloat(rateInput?.value) || 8;
-            const years = parseInt(yearsInput?.value) || 10;
-            
-            result = window.calculator.calculateLumpSum(principal, rate, years, 12);
+            // 使用外部计算器，确保传递数字类型并正确转换利率
+            result = window.calculator.calculateLumpSum(principal, rateDecimal, years, compoundMethod);
+            console.log('计算器返回结果:', result);
         } else {
             // 使用内置计算
-            const principal = parseFloat(principalInput?.value) || 100000;
-            const rate = parseFloat(rateInput?.value) || 8;
-            const years = parseInt(yearsInput?.value) || 10;
-            
-            const futureValue = principal * Math.pow(1 + rate / 100, years);
+            const r = rateDecimal / compoundMethod;
+            const n = years * compoundMethod;
+            const futureValue = principal * Math.pow(1 + r, n);
             const totalInterest = futureValue - principal;
             
             result = { futureValue, totalInterest, principal };
@@ -184,26 +202,44 @@ function calculateRegularInvestment() {
             document.getElementById('regular-years') || 
             document.getElementById('investment-years-regular') || 
             document.getElementById('years-regular');
+            
+        const compoundFrequencySelect = 
+            document.getElementById('compound-frequency-regular') || 
+            document.getElementById('compound-frequency');
+        
+        // 验证输入并确保正确转换为数字
+        const monthlyPayment = parseFloat(monthlyInput?.value) || 10000;
+        const rate = parseFloat(rateInput?.value) || 8;
+        const years = parseInt(yearsInput?.value, 10) || 10;
+        const compoundMethod = parseInt(compoundFrequencySelect?.value || 12, 10);
+        
+        console.log('计算定期定额投资:', { monthlyPayment, rate, years, compoundMethod });
+        
+        // 输入验证
+        if (monthlyPayment <= 0 || rate <= 0 || years <= 0) {
+            console.error('无效的投资参数');
+            return;
+        }
+        
+        // 将百分比转换为小数
+        const rateDecimal = rate / 100;
         
         // 使用外部计算器实例（如果可用）
         let result;
         if (window.calculator && typeof window.calculator.calculateRegularInvestment === 'function') {
-            // 使用外部计算器
-            const monthlyPayment = parseFloat(monthlyInput?.value) || 10000;
-            const rate = parseFloat(rateInput?.value) || 8;
-            const years = parseInt(yearsInput?.value) || 10;
-            
-            result = window.calculator.calculateRegularInvestment(monthlyPayment, rate, years, 12);
+            // 使用外部计算器，确保传递数字类型并正确转换利率
+            result = window.calculator.calculateRegularInvestment(monthlyPayment, rateDecimal, years, compoundMethod);
+            console.log('计算器返回结果:', result);
         } else {
             // 使用内置计算
-            const monthlyInvestment = parseFloat(monthlyInput?.value) || 10000;
-            const rate = parseFloat(rateInput?.value) || 8;
-            const years = parseInt(yearsInput?.value) || 10;
+            const monthlyInvestment = monthlyPayment;
+            const compoundRate = rateDecimal / compoundMethod;
+            const totalPeriods = years * compoundMethod;
             
-            const monthlyRate = rate / 100 / 12;
-            const totalMonths = years * 12;
-            const finalAmount = monthlyInvestment * ((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate);
-            const totalPrincipal = monthlyInvestment * totalMonths;
+            // 对于定期投资，我们假设计息频率和投资频率一致
+            const paymentPerPeriod = monthlyInvestment * (12 / compoundMethod);
+            const finalAmount = paymentPerPeriod * ((Math.pow(1 + compoundRate, totalPeriods) - 1) / compoundRate);
+            const totalPrincipal = monthlyInvestment * years * 12;
             const totalInterest = finalAmount - totalPrincipal;
             
             result = { futureValue: finalAmount, totalPrincipal, totalInterest };

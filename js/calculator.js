@@ -2,96 +2,156 @@
  * 复利投资计算器 - 核心计算逻辑
  */
 
+// 复利计算方式常量定义
+const COMPOUND_METHODS = {
+    YEARLY: { value: 1, label: '年复利', description: '一年结算一次利息', days: 365 },
+    MONTHLY: { value: 12, label: '月复利', description: '每月结算一次利息', days: 30 },
+    WEEKLY: { value: 52, label: '周复利', description: '每周结算一次利息', days: 7 },
+    DAILY: { value: 365, label: '日复利', description: '每天结算一次利息', days: 1 }
+};
+
 class InvestmentCalculator {
-    /**
-     * 计算一次性投资的复利结果
-     * @param {number} principal - 初始本金
-     * @param {number} annualRate - 年化利率（百分比）
-     * @param {number} years - 投资年限
-     * @param {number} compoundFrequency - 复利频率（每年复利次数）
-     * @returns {Object} 计算结果对象
-     */
-    calculateLumpSum(principal, annualRate, years, compoundFrequency) {
-        // 验证输入
-        if (principal < 0 || annualRate < 0 || years < 0 || compoundFrequency <= 0) {
-            throw new Error('输入参数不能为负数');
-        }
-        
-        // 将百分比转换为小数
-        const rate = annualRate / 100;
-        
-        // 复利计算公式: FV = P × (1 + r/n)^(nt)
-        const futureValue = principal * Math.pow(1 + rate / compoundFrequency, compoundFrequency * years);
-        
-        // 计算总收益
-        const totalInterest = futureValue - principal;
-        
-        // 计算总收益率
-        const returnRate = (totalInterest / principal) * 100;
-        
-        return {
-            principal: principal,
-            futureValue: futureValue,
-            totalInterest: totalInterest,
-            returnRate: returnRate
-        };
+    constructor() {
+        // 设置默认复利方式为月复利
+        this.defaultCompoundMethod = COMPOUND_METHODS.MONTHLY;
     }
     
     /**
-     * 计算定期定额投资的复利结果
-     * @param {number} monthlyPayment - 每月定投金额
-     * @param {number} annualRate - 年化利率（百分比）
-     * @param {number} years - 投资年限
-     * @param {number} compoundFrequency - 复利频率（每年复利次数）
-     * @returns {Object} 计算结果对象
+     * 获取复利频率值
+     * @param {string|number} method - 复利方式（'yearly', 'monthly', 'weekly', 'daily'）或直接的复利频率值
+     * @returns {number} 复利频率值（每年复利次数）
      */
-    calculateRegularInvestment(monthlyPayment, annualRate, years, compoundFrequency) {
+    getCompoundFrequency(method) {
+        // 确保方法参数被正确转换为数字或字符串
+        if (typeof method === 'string') {
+            // 尝试将字符串直接转换为数字
+            const numMethod = parseInt(method, 10);
+            if (!isNaN(numMethod)) {
+                return numMethod;
+            }
+            
+            // 否则按方法名称处理
+            const methodKey = method.toUpperCase();
+            switch (methodKey) {
+                case 'YEARLY':
+                    return COMPOUND_METHODS.YEARLY.value;
+                case 'MONTHLY':
+                    return COMPOUND_METHODS.MONTHLY.value;
+                case 'WEEKLY':
+                    return COMPOUND_METHODS.WEEKLY.value;
+                case 'DAILY':
+                    return COMPOUND_METHODS.DAILY.value;
+                default:
+                    return this.defaultCompoundMethod.value;
+            }
+        }
+        
+        if (typeof method === 'number') {
+            return method;
+        }
+        
+        return this.defaultCompoundMethod.value;
+    }
+    
+    /**
+     * 获取所有可用的复利计算方式
+     * @returns {Object} 复利计算方式对象
+     */
+    getCompoundMethods() {
+        return COMPOUND_METHODS;
+    }
+    /**
+     * 计算一次性投资未来价值
+     * @param {number} principal - 本金
+     * @param {number} rate - 年化利率（小数形式）
+     * @param {number} years - 投资年限
+     * @param {string|number} compoundMethod - 复利方式
+     * @returns {object} 包含未来价值、本金和利息的对象
+     */
+    calculateLumpSum(principal, rate, years, compoundMethod = this.defaultCompoundMethod.value) {
         // 验证输入
-        if (monthlyPayment < 0 || annualRate < 0 || years < 0 || compoundFrequency <= 0) {
+        if (principal < 0 || rate < 0 || years < 0) {
             throw new Error('输入参数不能为负数');
         }
         
-        // 将百分比转换为小数
-        const rate = annualRate / 100;
+        // 获取复利频率
+        const compoundFrequency = this.getCompoundFrequency(compoundMethod);
         
-        // 总投入本金
-        const totalPrincipal = monthlyPayment * 12 * years;
+        // 计算每期利率
+        const periodRate = rate / compoundFrequency;
         
-        // 计算未来价值
-        // 对于定期定额投资，由于投资是每月进行，但复利频率可能不同，需要精确计算
+        // 计算总期数
+        const totalPeriods = years * compoundFrequency;
         
-        let futureValue = 0;
+        // 应用复利公式: FV = PV * (1 + r)^n
+        const futureValue = principal * Math.pow(1 + periodRate, totalPeriods);
+        const totalInterest = futureValue - principal;
+        
+        // 返回包含所有必要信息的对象
+        return { futureValue, principal, totalInterest };
+    }
+    
+    /**
+     * 计算定期定额投资未来价值
+     * @param {number} monthlyPayment - 每月投资金额
+     * @param {number} rate - 年化利率（小数形式）
+     * @param {number} years - 投资年限
+     * @param {string|number} compoundMethod - 复利方式
+     * @returns {object} 包含未来价值、总投资和利息的对象
+     */
+    calculateRegularInvestment(monthlyPayment, rate, years, compoundMethod = this.defaultCompoundMethod.value) {
+        // 验证输入
+        if (monthlyPayment < 0 || rate < 0 || years < 0) {
+            throw new Error('输入参数不能为负数');
+        }
+        
+        // 获取复利频率
+        const compoundFrequency = this.getCompoundFrequency(compoundMethod);
+        
+        // 转换为总月数
         const totalMonths = years * 12;
+        
+        // 初始未来价值为0
+        let futureValue = 0;
         
         // 根据复利频率计算每次复利的时间间隔（月）
         const compoundIntervalInMonths = 12 / compoundFrequency;
+        
+        // 为了避免浮点数精度问题，使用累计复利周期数来跟踪
+        let compoundPeriods = 0;
         
         // 模拟每月投资和复利计算
         for (let month = 1; month <= totalMonths; month++) {
             // 添加当月投资
             futureValue += monthlyPayment;
             
-            // 检查是否需要复利
-            if (month % compoundIntervalInMonths === 0) {
+            // 使用更精确的方式判断是否需要复利
+            // 计算当前应该完成的复利周期数
+            const expectedCompoundPeriods = Math.floor((month / 12) * compoundFrequency);
+            
+            if (expectedCompoundPeriods > compoundPeriods) {
+                // 需要复利，计算复利次数
+                const periodsToAdd = expectedCompoundPeriods - compoundPeriods;
+                
                 // 计算该复利周期的利率
                 const periodRate = rate / compoundFrequency;
-                futureValue *= (1 + periodRate);
+                
+                // 应用复利
+                for (let i = 0; i < periodsToAdd; i++) {
+                    futureValue *= (1 + periodRate);
+                }
+                
+                // 更新已完成的复利周期数
+                compoundPeriods = expectedCompoundPeriods;
             }
         }
         
-        // 计算总收益
+        // 计算总投资金额和利息
+        const totalPrincipal = monthlyPayment * totalMonths;
         const totalInterest = futureValue - totalPrincipal;
         
-        // 计算总收益率
-        const returnRate = totalPrincipal > 0 ? (totalInterest / totalPrincipal) * 100 : 0;
-        
-        return {
-            monthlyPayment: monthlyPayment,
-            totalPrincipal: totalPrincipal,
-            futureValue: futureValue,
-            totalInterest: totalInterest,
-            returnRate: returnRate
-        };
+        // 返回包含所有必要信息的对象
+        return { futureValue, totalPrincipal, totalInterest };
     }
     
     /**
@@ -102,7 +162,9 @@ class InvestmentCalculator {
      * @param {number} compoundFrequency - 复利频率（每年复利次数）
      * @returns {Array} 年度数据数组
      */
-    generateLumpSumAnnualData(principal, annualRate, years, compoundFrequency) {
+    generateLumpSumAnnualData(principal, annualRate, years, compoundMethod = this.defaultCompoundMethod.value) {
+        // 获取复利频率值
+        const compoundFrequency = this.getCompoundFrequency(compoundMethod);
         const rate = annualRate / 100;
         const data = [];
         
@@ -127,7 +189,9 @@ class InvestmentCalculator {
      * @param {number} compoundFrequency - 复利频率（每年复利次数）
      * @returns {Array} 年度数据数组
      */
-    generateRegularInvestmentAnnualData(monthlyPayment, annualRate, years, compoundFrequency) {
+    generateRegularInvestmentAnnualData(monthlyPayment, annualRate, years, compoundMethod = this.defaultCompoundMethod.value) {
+        // 获取复利频率值
+        const compoundFrequency = this.getCompoundFrequency(compoundMethod);
         const rate = annualRate / 100;
         const data = [];
         let value = 0;
@@ -149,7 +213,11 @@ class InvestmentCalculator {
                 
                 // 检查是否需要复利
                 const totalMonths = (year - 1) * 12 + month;
-                if (totalMonths % compoundIntervalInMonths === 0) {
+                // 使用更精确的方式判断复利时机
+                const expectedCompoundPeriods = Math.floor((totalMonths / 12) * compoundFrequency);
+                const currentCompoundPeriods = Math.floor(((totalMonths - 1) / 12) * compoundFrequency);
+                
+                if (expectedCompoundPeriods > currentCompoundPeriods) {
                     const periodRate = rate / compoundFrequency;
                     value *= (1 + periodRate);
                 }
