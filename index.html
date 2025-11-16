@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>复利投资计算器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                        accent: '#8b5cf6',
+                        neutral: '#1f2937',
+                        'neutral-light': '#f3f4f6',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            }
+            .input-focus {
+                outline: none;
+            }
+            .input-focus:focus {
+                box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+                border-color: #3b82f6;
+                outline: none;
+            }
+            .btn-hover:hover {
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+                transform: translateY(-0.125rem);
+                transition: all 300ms;
+            }
+        }
+    </style>
+    
+    <!-- 自定义CSS样式 -->
+    <link rel="stylesheet" href="css/custom.css">
+</head>
+<body class="bg-gray-50 font-sans min-h-screen">
+    <!-- 头部导航 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-line-chart text-primary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-neutral">复利投资计算器</h1>
+            </div>
+            <nav class="hidden md:flex space-x-6">
+                <a href="index.html" class="text-primary font-medium hover:text-primary/80 transition-colors">首页</a>
+                <a href="lump-sum.html" class="text-neutral hover:text-primary transition-colors">一次性投资</a>
+                <a href="regular-investment.html" class="text-neutral hover:text-primary transition-colors">定期定投</a>
+            </nav>
+            <button class="md:hidden text-neutral text-xl" id="mobile-menu-button">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+        <!-- 移动端菜单 -->
+        <div class="md:hidden hidden bg-white w-full" id="mobile-menu">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+                <a href="index.html" class="text-primary font-medium py-2 transition-colors">首页</a>
+                <a href="lump-sum.html" class="text-neutral hover:text-primary py-2 transition-colors">一次性投资</a>
+                <a href="regular-investment.html" class="text-neutral hover:text-primary py-2 transition-colors">定期定投</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容区 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 英雄区域 -->
+        <section class="text-center py-12 md:py-20">
+            <h2 class="text-[clamp(1.5rem,4vw,2.5rem)] font-bold text-neutral mb-4">了解复利的力量</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto mb-12 text-lg">复利是投资中最强大的工具之一。选择您想要计算的投资方式，开始探索您的财务未来。</p>
+            
+            <!-- 投资方式选择按钮 -->
+            <div class="flex flex-col md:flex-row justify-center gap-8 max-w-3xl mx-auto">
+                <!-- 一次性投资选项 -->
+                <div class="card-shadow bg-white rounded-xl overflow-hidden flex-1 transition-all duration-300 hover:scale-105">
+                    <div class="bg-primary/10 p-6">
+                        <i class="fa fa-bullseye text-primary text-4xl mb-4"></i>
+                        <h3 class="text-xl font-bold text-neutral mb-2">一次性投资</h3>
+                        <p class="text-gray-600">计算单笔投资在特定时间和利率下的增长</p>
+                    </div>
+                    <div class="p-6">
+                        <a href="lump-sum.html" class="btn-hover inline-block w-full bg-primary text-white text-center px-6 py-3 rounded-lg font-medium">
+                            开始计算
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- 定期定额投资选项 -->
+                <div class="card-shadow bg-white rounded-xl overflow-hidden flex-1 transition-all duration-300 hover:scale-105">
+                    <div class="bg-secondary/10 p-6">
+                        <i class="fa fa-calendar-check-o text-secondary text-4xl mb-4"></i>
+                        <h3 class="text-xl font-bold text-neutral mb-2">定期定额投资</h3>
+                        <p class="text-gray-600">计算定期投资（如每月定投）的累积效果</p>
+                    </div>
+                    <div class="p-6">
+                        <a href="regular-investment.html" class="btn-hover inline-block w-full bg-secondary text-white text-center px-6 py-3 rounded-lg font-medium">
+                            开始计算
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 关于复利简介 -->
+        <section class="py-12 bg-white rounded-xl shadow-sm max-w-5xl mx-auto px-6">
+            <h3 class="text-2xl font-bold text-neutral mb-6 text-center">什么是复利？</h3>
+            <p class="text-gray-600 mb-4">复利是指不仅本金产生利息，之前累积的利息也会产生利息的计算方式。这就是爱因斯坦所说的"世界第八大奇迹"。</p>
+            <p class="text-gray-600 mb-4">通过长期投资并利用复利效应，即使是较小的投资也能随着时间的推移显著增长。</p>
+            <div class="grid md:grid-cols-2 gap-6 mt-8">
+                <div class="bg-neutral-light p-5 rounded-lg">
+                    <h4 class="font-bold text-neutral mb-2">复利的优势</h4>
+                    <ul class="list-disc list-inside text-gray-600 space-y-2">
+                        <li>投资回报指数级增长</li>
+                        <li>时间是您的盟友</li>
+                        <li>利用"利滚利"效应</li>
+                    </ul>
+                </div>
+                <div class="bg-neutral-light p-5 rounded-lg">
+                    <h4 class="font-bold text-neutral mb-2">开始投资的建议</h4>
+                    <ul class="list-disc list-inside text-gray-600 space-y-2">
+                        <li>尽早开始投资</li>
+                        <li>保持定期投资习惯</li>
+                        <li>长期持有，耐心等待</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- 页脚 -->
+    <footer class="bg-neutral text-white py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+        </div>
+    </footer>
+    
+    <!-- 基础JavaScript -->
+    <script src="js/app.js"></script>
+</body>
+</html>

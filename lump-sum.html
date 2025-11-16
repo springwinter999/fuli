@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一次性投资复利计算 - 复利投资计算器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                        accent: '#8b5cf6',
+                        neutral: '#1f2937',
+                        'neutral-light': '#f3f4f6',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            }
+            .input-focus {
+                outline: none;
+            }
+            .input-focus:focus {
+                box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+                border-color: #3b82f6;
+                outline: none;
+            }
+            .btn-hover:hover {
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+                transform: translateY(-0.125rem);
+                transition: all 300ms;
+            }
+        }
+    </style>
+    
+    <!-- 自定义CSS样式 -->
+    <link rel="stylesheet" href="css/custom.css">
+</head>
+<body class="bg-gray-50 font-sans min-h-screen">
+    <!-- 头部导航 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-line-chart text-primary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-neutral">复利投资计算器</h1>
+            </div>
+            <nav class="hidden md:flex space-x-6">
+                <a href="index.html" class="text-neutral hover:text-primary transition-colors">首页</a>
+                <a href="lump-sum.html" class="text-primary font-medium hover:text-primary/80 transition-colors">一次性投资</a>
+                <a href="regular-investment.html" class="text-neutral hover:text-primary transition-colors">定期定投</a>
+            </nav>
+            <button class="md:hidden text-neutral text-xl" id="mobile-menu-button">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+        <!-- 移动端菜单 -->
+        <div class="md:hidden hidden bg-white w-full" id="mobile-menu">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+                <a href="index.html" class="text-neutral hover:text-primary py-2 transition-colors">首页</a>
+                <a href="lump-sum.html" class="text-primary font-medium py-2 transition-colors">一次性投资</a>
+                <a href="regular-investment.html" class="text-neutral hover:text-primary py-2 transition-colors">定期定投</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容区 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 页面标题 -->
+        <section class="text-center py-6 md:py-10">
+            <h2 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-neutral mb-2">一次性投资复利计算</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto">计算单笔投资在特定时间和利率下的复利增长，直观了解长期投资的回报潜力。</p>
+        </section>
+
+        <!-- 一次性投资计算模块 -->
+        <section class="mb-16">
+            <div class="bg-white rounded-xl card-shadow p-6 md:p-8">
+                <div class="flex items-center space-x-3 mb-6">
+                    <div class="bg-primary/10 p-3 rounded-lg">
+                        <i class="fa fa-rocket text-primary text-xl"></i>
+                    </div>
+                    <h3 class="text-xl md:text-2xl font-bold text-neutral">计算参数设置</h3>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- 输入表单 -->
+                    <div class="space-y-6">
+                        <div class="space-y-2">
+                            <label for="initial-amount" class="block text-sm font-medium text-gray-700">初始本金 (元)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">¥</span>
+                                <input type="number" id="initial-amount" class="w-full pl-8 pr-3 py-3 border border-gray-300 rounded-lg input-focus" min="0" step="0.01" value="10000">
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="annual-rate" class="block text-sm font-medium text-gray-700">年化利率 (%)</label>
+                            <div class="relative">
+                                <input type="number" id="annual-rate" class="w-full pl-3 pr-8 py-3 border border-gray-300 rounded-lg input-focus" min="0" step="0.01" value="8">
+                                <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500">%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="investment-years" class="block text-sm font-medium text-gray-700">投资年限 (年)</label>
+                            <input type="number" id="investment-years" class="w-full px-3 py-3 border border-gray-300 rounded-lg input-focus" min="1" max="100" value="10">
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="compound-frequency-lump" class="block text-sm font-medium text-gray-700">复利频率</label>
+                            <select id="compound-frequency-lump" class="w-full px-3 py-3 border border-gray-300 rounded-lg input-focus">
+                                <option value="1">年复利</option>
+                                <option value="12">月复利</option>
+                                <option value="52">周复利</option>
+                                <option value="365">日复利</option>
+                            </select>
+                        </div>
+                        
+                        <button id="calculate-lump-sum" class="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium btn-hover">
+                            计算结果
+                        </button>
+                    </div>
+                    
+                    <!-- 结果展示 -->
+                    <div class="bg-neutral-light rounded-lg p-6 space-y-6">
+                        <h4 class="font-bold text-lg text-neutral">计算结果</h4>
+                        
+                        <div class="space-y-4">
+                            <div class="bg-white p-4 rounded-lg shadow-sm">
+                                <p class="text-sm text-gray-500">最终账户金额</p>
+                                <p class="text-2xl font-bold text-primary" id="lump-final-amount">¥0.00</p>
+                            </div>
+                            
+                            <div class="bg-white p-4 rounded-lg shadow-sm">
+                                <p class="text-sm text-gray-500">总收益率</p>
+                                <p class="text-2xl font-bold text-secondary" id="lump-total-return-rate">0.00%</p>
+                            </div>
+                            
+                            <div class="bg-white p-4 rounded-lg shadow-sm">
+                                <p class="text-sm text-gray-500">利息收益</p>
+                                <p class="text-xl font-bold text-accent" id="lump-interest-earned">¥0.00</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 图表展示 -->
+                <div class="mt-8">
+                    <h4 class="font-bold text-lg text-neutral mb-4">资金增长趋势</h4>
+                    <div class="w-full h-80">
+                        <canvas id="lump-sum-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 计算说明 -->
+        <section class="mb-16">
+            <div class="bg-white rounded-xl shadow-sm p-6 md:p-8">
+                <h3 class="text-xl font-bold text-neutral mb-6">一次性投资计算说明</h3>
+                
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-neutral mb-3">计算公式</h4>
+                        <p class="text-gray-600">FV = P × (1 + r/n)^(nt)</p>
+                        <ul class="text-gray-600 list-disc pl-6 mt-3 space-y-1">
+                            <li>FV = 未来价值（最终金额）</li>
+                            <li>P = 本金</li>
+                            <li>r = 年化利率</li>
+                            <li>n = 每年复利次数</li>
+                            <li>t = 投资年限</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold text-neutral mb-3">适合人群</h4>
+                        <p class="text-gray-600">一次性投资适合有闲置资金、希望通过长期投资获得稳定回报的投资者。这种投资方式简单直接，适合对资金流动性要求不高的长期目标，如退休储备、子女教育基金等。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- 页脚 -->
+    <footer class="bg-neutral text-white py-8">
+        <div class="container mx-auto px-4 text-center">
+        </div>
+    </footer>
+    
+    <!-- JavaScript -->
+    <script src="js/calculator.js"></script>
+    <script src="js/chart.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/ux-enhancements.js"></script>
+</body>
+</html>
